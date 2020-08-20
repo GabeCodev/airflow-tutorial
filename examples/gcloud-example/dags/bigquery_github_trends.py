@@ -6,8 +6,7 @@ from airflow.models import Variable
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_check_operator import BigQueryCheckOperator
 
-
-# Config variables
+# Config variables(Recommended way for using variables in Airflow)
 dag_config = Variable.get("bigquery_github_trends_variables", deserialize_json=True)
 BQ_CONN_ID = dag_config["bq_conn_id"]
 BQ_PROJECT = dag_config["bq_project"]
@@ -16,8 +15,8 @@ BQ_DATASET = dag_config["bq_dataset"]
 default_args = {
     'owner': 'airflow',
     'depends_on_past': True,    
-    'start_date': datetime(2018, 12, 1),
-    'end_date': datetime(2018, 12, 5),
+    'start_date': datetime(2020, 8, 1),
+    'end_date': datetime(2020, 8, 13),
     'email': ['airflow@airflow.com'],
     'email_on_failure': True,
     'email_on_retry': False,
@@ -36,9 +35,10 @@ dag = DAG(
     schedule_interval=schedule_interval
     )
 
+
 ## Task 1: check that the github archive data has a dated table created for that date
 # To test this task, run this command:
-# docker-compose -f docker-compose-gcloud.yml run --rm webserver airflow test bigquery_github_trends bq_check_githubarchive_day 2018-12-01
+# docker-compose -f docker-compose-gcloud.yml run --rm webserver airflow test bigquery_github_trends bq_check_githubarchive_day 2020-08-10
 t1 = BigQueryCheckOperator(
         task_id='bq_check_githubarchive_day',
         sql='''
@@ -61,6 +61,7 @@ t2 = BigQueryCheckOperator(
         sql='''
         #standardSQL
         SELECT
+          timestamp,
           FORMAT_TIMESTAMP("%Y%m%d", timestamp ) AS date
         FROM
           `bigquery-public-data.hacker_news.full`
